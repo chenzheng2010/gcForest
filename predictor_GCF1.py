@@ -62,13 +62,13 @@ Gray_dissimilarity = st.number_input("Gray_dissimilarity:", min_value=0.68, max_
 # Gray_homogeneity: numerical input
 Gray_homogeneity = st.number_input("Gray_homogeneity:", min_value=0.64, max_value=0.76, value=0.65)
 # Gray_correlation: numerical input
-Gray_correlation = st.number_input("Gray_correlation:", min_value=0.9982, max_value=0.9985, value=0.9983)
+Gray_correlation = st.number_input("Gray_correlation:", min_value=0.9000, max_value=1.0000, value=0.9983)
 # R_contrast: numerical input
 R_contrast = st.number_input("R_contrast:", min_value=4.4, max_value=16.2, value=5.0)
 # R_dissimilarity: numerical input
 R_dissimilarity = st.number_input("R_dissimilarity:", min_value=0.71, max_value=1.21, value=0.85)
 # R_correlation: numerical input
-R_correlation = st.number_input("R_correlation:", min_value=0.9979, max_value=0.9996, value=0.9980)
+R_correlation = st.number_input("R_correlation:", min_value=0.9000, max_value=1.0000, value=0.9980)
 # R_entropy: numerical input
 R_entropy = st.number_input("R_entropy:", min_value=4.0, max_value=5.3, value=4.5)
 # G_contrast: numerical input
@@ -78,11 +78,11 @@ G_dissimilarity = st.number_input("G_dissimilarity:", min_value=0.69, max_value=
 # G_homogeneity: numerical input
 G_homogeneity = st.number_input("G_homogeneity:", min_value=0.64, max_value=0.76, value=0.65)
 # G_correlation: numerical input
-G_correlation = st.number_input("G_correlation:", min_value=0.9986, max_value=0.9995, value=0.9987)
+G_correlation = st.number_input("G_correlation:", min_value=0.9000, max_value=1.0000, value=0.9987)
 # B_dissimilarity: numerical input
 B_dissimilarity = st.number_input("B_dissimilarity:", min_value=0.90, max_value=1.37, value=0.95)
 # B_correlation: numerical input
-B_correlation = st.number_input("B_correlation:", min_value=0.9906, max_value=0.9987, value=0.9910)
+B_correlation = st.number_input("B_correlation:", min_value=0.9000, max_value=1.0000, value=0.9910)
 # S_mean: numerical input
 B_entropy = st.number_input("B_entropy:", min_value=3.86, max_value=5.33, value=4.00)
 
@@ -99,26 +99,63 @@ features = np.array([feature_values])
 if st.button("Predict"):
     # Predict class and probabilities
     predicted_class = model.predict(features)[0]
-    predicted_proba = model.predict_proba(features)[0]
+    predicted_proba = model.predict_proba(features)[:, 0]
 
     # Display prediction results
-    st.write(f"**Predicted Class:** {predicted_class} (2: guoshu, 1: shishu, 0: qianshu)")
+    st.write(f"**Predicted Class:** {predicted_class} (2: 过熟, 1: 适熟, 0: 欠熟)")
     st.write(f"**Prediction Probabilities:** {predicted_proba}")
 
     # Generate advice based on prediction results
-    probability = predicted_proba[predicted_class] * 100
+    probability0 = predicted_proba[:, 0] * 100
+    probability1 = predicted_proba[:, 1] * 100
+    probability2 = predicted_proba[:, 2] * 100
 
-    if predicted_class == 1:
+    if predicted_class == 0:
         advice = (
-            f"According to our model, you have a high risk of heart disease. "
-            f"The model predicts that your probability of having heart disease is {probability:.1f}%. "
-            "It's advised to consult with your healthcare provider for further evaluation and possible intervention."
+            f"中部叶的叶面60%～70%黄绿色，主脉变白1/2左右；上部叶的叶面70%～80%浅黄色，主脉变白2/3 左右。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability0:.1f}%。"
+            "建议延时田间采收烘烤。"
         )
-    else:
+    elif predicted_class == 1:
         advice = (
             f"According to our model, you have a low risk of heart disease. "
-            f"The model predicts that your probability of not having heart disease is {probability:.1f}%. "
+            f"The model predicts that your probability of not having heart disease is {probability1:.1f}%. "
+            "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
+        )
+    elif predicted_class == 2:
+        advice = (
+            f"According to our model, you have a low risk of heart disease. "
+            f"The model predicts that your probability of not having heart disease is {probability2:.1f}%. "
             "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
         )
 
     st.write(advice)
+
+    # 使用 SHAP 解释模型
+    explainer = shap.KernelExplainer(model.predict_proba, X_test.iloc[0:10, :])
+    # shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
+    shap_values = explainer(X_test)
+    # 提取每个类别的 SHAP 值
+    shap_values_class_1 = shap_values[:, :, 0]
+    shap_values_class_2 = shap_values[:, :, 1]
+    shap_values_class_3 = shap_values[:, :, 2]
+
+    # 绘制 SHAP 总结图
+    plt.figure()
+    plt.title('Class 1 SHAP Summary')
+    shap.summary_plot(shap_values_class_1, X_test, plot_type="dot", cmap="viridis")
+    # plt.savefig("Class 1 SHAP Summary.pdf", format='pdf', bbox_inches='tight')
+    plt.savefig("Class 1 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    st.image("Class 1 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+
+    plt.figure()
+    plt.title('Class 2 SHAP Summary')
+    shap.summary_plot(shap_values_class_2, X_test, plot_type="dot", cmap="viridis")
+    plt.savefig("Class 2 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    st.image("Class 2 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+
+    plt.figure()
+    plt.title('Class 3 SHAP Summary')
+    shap.summary_plot(shap_values_class_3, X_test, plot_type="dot", cmap="viridis")
+    plt.savefig("Class 3 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    st.image("Class 3 SHAP Summary.png", caption='SHAP Force Plot Explanation')
