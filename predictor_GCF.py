@@ -15,7 +15,7 @@ X_test = pd.read_csv('X_test.csv')
 
 # Define feature names from the new dataset
 feature_names = [
-    "Length", "L/W_Ratio", "Area", "Perimeter", "Roundness", "R_mean", "R_std", "B_std", "a_mean",
+    "Length", "L_W_Ratio", "Area", "Perimeter", "Roundness", "R_mean", "R_std", "B_std", "a_mean",
     "a_std", "b_mean", "b_std", "H_mean", "H_std", "S_mean", "Gray_contrast", "Gray_dissimilarity",
     "Gray_homogeneity", "Gray_correlation", "R_contrast", "R_dissimilarity", "R_correlation",
     "R_entropy", "G_contrast", "G_dissimilarity", "G_homogeneity", "G_correlation", "B_dissimilarity",
