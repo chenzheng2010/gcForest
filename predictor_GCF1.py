@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 from lime.lime_tabular import LimeTabularExplainer
 
 # Load the new model
@@ -102,7 +104,7 @@ if st.button("Predict"):
     predicted_proba = model.predict_proba(features)[0]
 
     # Display prediction results
-    st.write(f"**Predicted Class:** {predicted_class} (2: 过熟, 1: 适熟, 0: 欠熟)")
+    st.write(f"**Predicted Class:** {predicted_class} (0: 欠熟, 1: 适熟, 0: 过熟)")
     st.write(f"**Prediction Probabilities:** {predicted_proba}")
 
     # Generate advice based on prediction results
@@ -112,19 +114,19 @@ if st.button("Predict"):
         advice = (
             f"中部叶的叶面60%～70%黄绿色，主脉变白1/2左右；上部叶的叶面70%～80%浅黄色，主脉变白2/3 左右。"
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议延时田间采收烘烤。"
+            "采收意见：建议延时田间采收烘烤。"
         )
     elif predicted_class == 1:
         advice = (
             f"中部叶的叶面70%～80%浅黄色，主脉变白2/3左右；上部叶的叶面80%～90%浅黄色，主脉变白3/4左右。"
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议及时进行田间采收烘烤。"
+            "采收意见：建议及时进行田间采收烘烤。"
         )
     elif predicted_class == 2:
         advice = (
             f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议提前进行采烤。"
+            "采收意见：建议提前进行采烤。"
         )
 
     st.write(advice)
@@ -148,34 +150,25 @@ if st.button("Predict"):
     plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
     st.image("shap_force_plot.png", caption='SHAP Force Plot Explanation')
 
+    # 计算测试集的shap值, 限制前50个训练样本是因为计算所有样本时间太长, 这里自己定义用多少个样本或者用全部 运行速度相关 我使用了20个样本
+    # shap_values1 = explainer.shap_values(X=X_test.iloc[0:20, :], nsamples=100)
+    shap_values2 = explainer(X=X_test.iloc[0:20, :])
 
+    # 提取每个类别的 SHAP 值
+    shap_values_class_1 = shap_values2.values[:, :, 0]
+    shap_values_class_2 = shap_values2.values[:, :, 1]
+    shap_values_class_3 = shap_values2.values[:, :, 2]
+    shap_values_class_1
 
-    # # 计算测试集的shap值, 限制前50个训练样本是因为计算所有样本时间太长, 这里自己定义用多少个样本或者用全部 运行速度相关 我使用了20个样本
-    # shap_values = explainer.shap_values(X=X_test.iloc[0:20, :], nsamples=100)
-    # shap_values2 = explainer(X=X_test.iloc[0:20, :])
-    #
-    # pd.DataFrame(feature_values).shape
-    # print("shap值维度;", shap_values.shape)
-    # shap_values.shape
-    # pd.DataFrame([feature_values], columns=feature_names)
-    #
+    expected_value = explainer.expected_value[0]  # 需要指定个类别的基准值，这里是第一个类别
+    # 创建 shap.Explanation 对象
+    shap_explanation = shap.Explanation(values=shap_values_class_1[0:10, :],
+                                        base_values=expected_value,
+                                        data=X_test.iloc[0:10, :],
+                                        feature_names=X_test.columns)
+    # 绘制热图
+    plt.figure()
+    shap.plots.heatmap(shap_explanation)
+    plt.savefig("shap_heatmap_plot.png", bbox_inches='tight', dpi=1200)
+    st.image("shap_heatmap_plot.png", caption='SHAP heatmap Plot Explanation')
 
-    # # 绘制 SHAP 总结图
-    # plt.figure()
-    # plt.title('Class 0 SHAP Summary')
-    # shap.summary_plot(shap_values_class_0, X_test, plot_type="dot", cmap="viridis")
-    # # plt.savefig("Class 0 SHAP Summary.pdf", format='pdf', bbox_inches='tight')
-    # plt.savefig("Class 0 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    # st.image("Class 0 SHAP Summary.png", caption='SHAP Force Plot Explanation')
-    #
-    # plt.figure()
-    # plt.title('Class 1 SHAP Summary')
-    # shap.summary_plot(shap_values_class_1, X_test, plot_type="dot", cmap="viridis")
-    # plt.savefig("Class 1 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    # st.image("Class 1 SHAP Summary.png", caption='SHAP Force Plot Explanation')
-    #
-    # plt.figure()
-    # plt.title('Class 2 SHAP Summary')
-    # shap.summary_plot(shap_values_class_2, X_test, plot_type="dot", cmap="viridis")
-    # plt.savefig("Class 2 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    # st.image("Class 2 SHAP Summary.png", caption='SHAP Force Plot Explanation')
