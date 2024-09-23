@@ -110,27 +110,17 @@ if st.button("Predict"):
     # Generate advice based on prediction results
     probability = predicted_proba[predicted_class] * 100
 
-    if predicted_class == 0:
+    if predicted_class == 1:
         advice = (
-            f"中部叶的叶面60%～70%黄绿色，主脉变白1/2左右；上部叶的叶面70%～80%浅黄色，主脉变白2/3 左右。"
-            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议延时田间采收烘烤。"
+            f"According to our model, you have a high risk of heart disease. "
+            f"The model predicts that your probability of having heart disease is {probability:.1f}%. "
+            "It's advised to consult with your healthcare provider for further evaluation and possible intervention."
         )
-    elif predicted_class == 1:
+    else:
         advice = (
-            f"中部叶的叶面70%～80%浅黄色，主脉变白2/3左右；上部叶的叶面80%～90%浅黄色，主脉变白3/4左右。"
-            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议及时进行田间采收烘烤。"
-        )
-    elif predicted_class == 2:
-        advice = (
-            f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
-            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
-            "建议提前进行采烤。"
+            f"According to our model, you have a low risk of heart disease. "
+            f"The model predicts that your probability of not having heart disease is {probability:.1f}%. "
+            "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
         )
 
     st.write(advice)
-
-
-
-
