@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
+from lime.lime_tabular import LimeTabularExplainer
 
 # Load the new model
 model = joblib.load('GCF1.pkl')
+import matplotlib
+matplotlib.use('TkAgg')
 
 # Load the test data from X_test.csv to create LIME explainer
 X_test = pd.read_csv('X_test.csv')
@@ -97,17 +100,17 @@ features = np.array([feature_values])
 
 if st.button("Predict"):
     # Predict class and probabilities
-    predicted_class = model.predict(features)
-    predicted_proba = model.predict_proba(features)
+    predicted_class = model.predict(features)[0]
+    predicted_proba = model.predict_proba(features)[0]
 
     # Display prediction results
     st.write(f"**Predicted Class:** {predicted_class} (2: 过熟, 1: 适熟, 0: 欠熟)")
     st.write(f"**Prediction Probabilities:** {predicted_proba}")
 
     # Generate advice based on prediction results
-    probability0 = predicted_proba[:, 0] * 100
-    probability1 = predicted_proba[:, 1] * 100
-    probability2 = predicted_proba[:, 2] * 100
+    probability0 = predicted_proba[0] * 100
+    probability1 = predicted_proba[1] * 100
+    probability2 = predicted_proba[2] * 100
 
     if predicted_class == 0:
         advice = (
@@ -131,4 +134,52 @@ if st.button("Predict"):
     st.write(advice)
 
 
+    # 使用 SHAP 解释模型
+    # 使用一个小的子集作为背景数据（可以是Xtest的一个子集）
+    background = shap.sample(X_test, 20)
+    # explainer = shap.KernelExplainer(model.predict_proba, X_test.iloc[0:10, :])
+    explainer = shap.KernelExplainer(model.predict_proba, background)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
 
+    # Display the SHAP force plot for the predicted class
+    if predicted_class == 0:
+        shap.force_plot(explainer.expected_value[0], shap_values[:, :, 0], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
+    elif predicted_class == 1:
+        shap.force_plot(explainer.expected_value[1], shap_values[:, :, 1], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
+    elif predicted_class == 2:
+        shap.force_plot(explainer.expected_value[2], shap_values[:, :, 2], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
+
+    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
+    st.image("shap_force_plot.png", caption='SHAP Force Plot Explanation')
+
+
+
+    # # 计算测试集的shap值, 限制前50个训练样本是因为计算所有样本时间太长, 这里自己定义用多少个样本或者用全部 运行速度相关 我使用了20个样本
+    # shap_values = explainer.shap_values(X=X_test.iloc[0:20, :], nsamples=100)
+    # shap_values2 = explainer(X=X_test.iloc[0:20, :])
+    #
+    # pd.DataFrame(feature_values).shape
+    # print("shap值维度;", shap_values.shape)
+    # shap_values.shape
+    # pd.DataFrame([feature_values], columns=feature_names)
+    #
+
+    # # 绘制 SHAP 总结图
+    # plt.figure()
+    # plt.title('Class 0 SHAP Summary')
+    # shap.summary_plot(shap_values_class_0, X_test, plot_type="dot", cmap="viridis")
+    # # plt.savefig("Class 0 SHAP Summary.pdf", format='pdf', bbox_inches='tight')
+    # plt.savefig("Class 0 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 0 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    #
+    # plt.figure()
+    # plt.title('Class 1 SHAP Summary')
+    # shap.summary_plot(shap_values_class_1, X_test, plot_type="dot", cmap="viridis")
+    # plt.savefig("Class 1 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 1 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    #
+    # plt.figure()
+    # plt.title('Class 2 SHAP Summary')
+    # shap.summary_plot(shap_values_class_2, X_test, plot_type="dot", cmap="viridis")
+    # plt.savefig("Class 2 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 2 SHAP Summary.png", caption='SHAP Force Plot Explanation')
