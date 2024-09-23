@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
 from lime.lime_tabular import LimeTabularExplainer
 
 # Load the new model
