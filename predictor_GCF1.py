@@ -6,9 +6,12 @@ import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 from lime.lime_tabular import LimeTabularExplainer
+from webencodings import Encoding
 
 # Load the new model
 model = joblib.load('GCF1.pkl')
+import matplotlib
+matplotlib.use('TkAgg')
 
 # Load the test data from X_test.csv to create LIME explainer
 X_test = pd.read_csv('X_test.csv')
@@ -62,13 +65,13 @@ Gray_dissimilarity = st.number_input("Gray_dissimilarity:", min_value=0.68, max_
 # Gray_homogeneity: numerical input
 Gray_homogeneity = st.number_input("Gray_homogeneity:", min_value=0.64, max_value=0.76, value=0.65)
 # Gray_correlation: numerical input
-Gray_correlation = st.number_input("Gray_correlation:", min_value=0.9000, max_value=1.0000, value=0.9983)
+Gray_correlation = st.number_input("Gray_correlation:", min_value=0.10, max_value=1.00, value=0.99)
 # R_contrast: numerical input
 R_contrast = st.number_input("R_contrast:", min_value=4.4, max_value=16.2, value=5.0)
 # R_dissimilarity: numerical input
 R_dissimilarity = st.number_input("R_dissimilarity:", min_value=0.71, max_value=1.21, value=0.85)
 # R_correlation: numerical input
-R_correlation = st.number_input("R_correlation:", min_value=0.9000, max_value=1.0000, value=0.9980)
+R_correlation = st.number_input("R_correlation:", min_value=0.10, max_value=1.00, value=0.99)
 # R_entropy: numerical input
 R_entropy = st.number_input("R_entropy:", min_value=4.0, max_value=5.3, value=4.5)
 # G_contrast: numerical input
@@ -78,11 +81,11 @@ G_dissimilarity = st.number_input("G_dissimilarity:", min_value=0.69, max_value=
 # G_homogeneity: numerical input
 G_homogeneity = st.number_input("G_homogeneity:", min_value=0.64, max_value=0.76, value=0.65)
 # G_correlation: numerical input
-G_correlation = st.number_input("G_correlation:", min_value=0.9000, max_value=1.0000, value=0.9987)
+G_correlation = st.number_input("G_correlation:", min_value=0.10, max_value=1.00, value=0.99)
 # B_dissimilarity: numerical input
 B_dissimilarity = st.number_input("B_dissimilarity:", min_value=0.90, max_value=1.37, value=0.95)
 # B_correlation: numerical input
-B_correlation = st.number_input("B_correlation:", min_value=0.9000, max_value=1.0000, value=0.9910)
+B_correlation = st.number_input("B_correlation:", min_value=0.10, max_value=1.00, value=0.99)
 # S_mean: numerical input
 B_entropy = st.number_input("B_entropy:", min_value=3.86, max_value=5.33, value=4.00)
 
@@ -98,8 +101,8 @@ features = np.array([feature_values])
 
 if st.button("Predict"):
     # Predict class and probabilities
-    predicted_class = model.predict(features)[0]
-    predicted_proba = model.predict_proba(features)[:, 0]
+    predicted_class = model.predict(features)
+    predicted_proba = model.predict_proba(features)
 
     # Display prediction results
     st.write(f"**Predicted Class:** {predicted_class} (2: 过熟, 1: 适熟, 0: 欠熟)")
@@ -118,44 +121,66 @@ if st.button("Predict"):
         )
     elif predicted_class == 1:
         advice = (
-            f"According to our model, you have a low risk of heart disease. "
-            f"The model predicts that your probability of not having heart disease is {probability1:.1f}%. "
-            "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
+            f"中部叶的叶面70%～80%浅黄色，主脉变白2/3左右；上部叶的叶面80%～90%浅黄色，主脉变白3/4左右。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability1:.1f}%。"
+            "建议及时进行田间采收烘烤。"
         )
     elif predicted_class == 2:
         advice = (
-            f"According to our model, you have a low risk of heart disease. "
-            f"The model predicts that your probability of not having heart disease is {probability2:.1f}%. "
-            "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
+            f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability2:.1f}%。"
+            "建议提前进行采烤。"
         )
 
     st.write(advice)
 
+
     # 使用 SHAP 解释模型
-    explainer = shap.KernelExplainer(model.predict_proba, X_test.iloc[0:10, :])
-    # shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
-    shap_values = explainer(X_test)
-    # 提取每个类别的 SHAP 值
-    shap_values_class_1 = shap_values[:, :, 0]
-    shap_values_class_2 = shap_values[:, :, 1]
-    shap_values_class_3 = shap_values[:, :, 2]
+    # 使用一个小的子集作为背景数据（可以是Xtest的一个子集）
+    background = shap.sample(X_test, 20)
+    # explainer = shap.KernelExplainer(model.predict_proba, X_test.iloc[0:10, :])
+    explainer = shap.KernelExplainer(model.predict_proba, background)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
 
-    # 绘制 SHAP 总结图
-    plt.figure()
-    plt.title('Class 1 SHAP Summary')
-    shap.summary_plot(shap_values_class_1, X_test, plot_type="dot", cmap="viridis")
-    # plt.savefig("Class 1 SHAP Summary.pdf", format='pdf', bbox_inches='tight')
-    plt.savefig("Class 1 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    st.image("Class 1 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    # Display the SHAP force plot for the predicted class
+    if predicted_class == 0:
+        shap.force_plot(explainer.expected_value[0], shap_values[:, :, 0], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
+    elif predicted_class == 1:
+        shap.force_plot(explainer.expected_value[1], shap_values[:, :, 1], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
+    elif predicted_class == 2:
+        shap.force_plot(explainer.expected_value[2], shap_values[:, :, 2], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
 
-    plt.figure()
-    plt.title('Class 2 SHAP Summary')
-    shap.summary_plot(shap_values_class_2, X_test, plot_type="dot", cmap="viridis")
-    plt.savefig("Class 2 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    st.image("Class 2 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
+    st.image("shap_force_plot.png", caption='SHAP Force Plot Explanation')
 
-    plt.figure()
-    plt.title('Class 3 SHAP Summary')
-    shap.summary_plot(shap_values_class_3, X_test, plot_type="dot", cmap="viridis")
-    plt.savefig("Class 3 SHAP Summary.png", bbox_inches='tight', dpi=1200)
-    st.image("Class 3 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+
+
+    # # 计算测试集的shap值, 限制前50个训练样本是因为计算所有样本时间太长, 这里自己定义用多少个样本或者用全部 运行速度相关 我使用了20个样本
+    # shap_values = explainer.shap_values(X=X_test.iloc[0:20, :], nsamples=100)
+    # shap_values2 = explainer(X=X_test.iloc[0:20, :])
+    
+    # pd.DataFrame(feature_values).shape
+    # print("shap值维度;", shap_values.shape)
+    # shap_values.shape
+    # pd.DataFrame([feature_values], columns=feature_names)
+    
+
+    # # 绘制 SHAP 总结图
+    # plt.figure()
+    # plt.title('Class 0 SHAP Summary')
+    # shap.summary_plot(shap_values_class_0, X_test, plot_type="dot", cmap="viridis")
+    # # plt.savefig("Class 0 SHAP Summary.pdf", format='pdf', bbox_inches='tight')
+    # plt.savefig("Class 0 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 0 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    #
+    # plt.figure()
+    # plt.title('Class 1 SHAP Summary')
+    # shap.summary_plot(shap_values_class_1, X_test, plot_type="dot", cmap="viridis")
+    # plt.savefig("Class 1 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 1 SHAP Summary.png", caption='SHAP Force Plot Explanation')
+    #
+    # plt.figure()
+    # plt.title('Class 2 SHAP Summary')
+    # shap.summary_plot(shap_values_class_2, X_test, plot_type="dot", cmap="viridis")
+    # plt.savefig("Class 2 SHAP Summary.png", bbox_inches='tight', dpi=1200)
+    # st.image("Class 2 SHAP Summary.png", caption='SHAP Force Plot Explanation')
