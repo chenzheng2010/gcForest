@@ -6,7 +6,6 @@ import pandas as pd
 import shap
 import matplotlib.pyplot as plt
 from lime.lime_tabular import LimeTabularExplainer
-from webencodings import Encoding
 
 # Load the new model
 model = joblib.load('GCF1.pkl')
