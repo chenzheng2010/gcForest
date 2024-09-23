@@ -8,6 +8,8 @@ from lime.lime_tabular import LimeTabularExplainer
 
 # Load the new model
 model = joblib.load('GCF1.pkl')
+import matplotlib
+matplotlib.use('TkAgg')
 
 # Load the test data from X_test.csv to create LIME explainer
 X_test = pd.read_csv('X_test.csv')
@@ -101,25 +103,30 @@ if st.button("Predict"):
     predicted_proba = model.predict_proba(features)[0]
 
     # Display prediction results
-    st.write(f"**Predicted Class:** {predicted_class} (2: guoshu, 1: shishu, 0: qianshu)")
+    st.write(f"**Predicted Class:** {predicted_class} (2: 过熟, 1: 适熟, 0: 欠熟)")
     st.write(f"**Prediction Probabilities:** {predicted_proba}")
 
     # Generate advice based on prediction results
     probability = predicted_proba[predicted_class] * 100
 
-    if predicted_class == 1:
+    if predicted_class == 0:
         advice = (
-            f"According to our model, you have a high risk of heart disease. "
-            f"The model predicts that your probability of having heart disease is {probability:.1f}%. "
-            "It's advised to consult with your healthcare provider for further evaluation and possible intervention."
+            f"中部叶的叶面60%～70%黄绿色，主脉变白1/2左右；上部叶的叶面70%～80%浅黄色，主脉变白2/3 左右。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
+            "建议延时田间采收烘烤。"
         )
-    else:
+    elif predicted_class == 1:
         advice = (
-            f"According to our model, you have a low risk of heart disease. "
-            f"The model predicts that your probability of not having heart disease is {probability:.1f}%. "
-            "However, maintaining a healthy lifestyle is important. Please continue regular check-ups with your healthcare provider."
+            f"中部叶的叶面70%～80%浅黄色，主脉变白2/3左右；上部叶的叶面80%～90%浅黄色，主脉变白3/4左右。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
+            "建议及时进行田间采收烘烤。"
         )
-
+    elif predicted_class == 2:
+        advice = (
+            f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
+            f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
+            "建议提前进行采烤。"
+        )
     st.write(advice)
 
     # SHAP Explanation
