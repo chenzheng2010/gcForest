@@ -4,18 +4,13 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
-# import matplotlib
-# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from lime.lime_tabular import LimeTabularExplainer
 
-# Load the new model
 model = joblib.load('GCF.pkl')
 
-# Load the test data from X_test.csv to create LIME explainer
 X_test = pd.read_csv('X_test.csv')
 
-# Define feature names from the new dataset
 feature_names = [
     "Length", "L_W_Ratio", "Area", "Perimeter", "Roundness", "R_mean", "R_std", "B_std", "a_mean",
     "a_std", "b_mean", "b_std", "H_mean", "H_std", "S_mean", "Gray_contrast", "Gray_dissimilarity",
@@ -24,10 +19,9 @@ feature_names = [
     "B_correlation", "B_entropy"
 ]
 
-# Streamlit user interface
+
 st.title("烟叶成熟度判别")
 
-# Length: numerical input
 Length = st.number_input("Length:", min_value=417, max_value=745, value=500)
 # L_W_Ratio: numerical input
 L_W_Ratio = st.number_input("L_W_Ratio:", min_value=1.40, max_value=3.53, value=1.52)
@@ -123,7 +117,7 @@ if st.button("Predict"):
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
             "采收意见：建议及时进行田间采收烘烤。"
         )
-    elif predicted_class == 2:
+    else predicted_class == 2:
         advice = (
             f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
@@ -142,7 +136,7 @@ if st.button("Predict"):
         shap.force_plot(explainer.expected_value[0], shap_values[:, :, 0], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
     elif predicted_class == 1:
         shap.force_plot(explainer.expected_value[1], shap_values[:, :, 1], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
-    elif predicted_class == 2:
+    else predicted_class == 2:
         shap.force_plot(explainer.expected_value[2], shap_values[:, :, 2], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
 
     plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
@@ -167,7 +161,7 @@ if st.button("Predict"):
     plt.savefig("shap_heatmap_plot.png", bbox_inches='tight', dpi=1200)
     st.image("shap_heatmap_plot.png", caption='SHAP heatmap Plot Explanation')
 
-    # LIME Explanation
+ 
     st.subheader("LIME Explanation")
     lime_explainer = LimeTabularExplainer(
         training_data=X_test.values,
