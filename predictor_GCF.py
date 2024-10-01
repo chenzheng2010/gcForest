@@ -117,7 +117,7 @@ if st.button("Predict"):
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
             "采收意见：建议及时进行田间采收烘烤。"
         )
-    else predicted_class == 2:
+    elif predicted_class == 2:
         advice = (
             f"中部叶的叶面90%～100%黄色，主脉全白；上部叶的叶面90%～100%黄色，主脉全白。"
             f"模型预测该烟叶样本为欠熟档次的概率是{probability:.1f}%。"
@@ -136,7 +136,7 @@ if st.button("Predict"):
         shap.force_plot(explainer.expected_value[0], shap_values[:, :, 0], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
     elif predicted_class == 1:
         shap.force_plot(explainer.expected_value[1], shap_values[:, :, 1], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
-    else predicted_class == 2:
+    elif predicted_class == 2:
         shap.force_plot(explainer.expected_value[2], shap_values[:, :, 2], pd.DataFrame([feature_values],columns=feature_names), matplotlib=True)
 
     plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
