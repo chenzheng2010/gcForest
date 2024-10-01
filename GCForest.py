@@ -1,14 +1,14 @@
 #!usr/bin/env python
 
-# 导入第三方库
+
 import itertools  # 迭代工具
 import numpy as np  # 科学计算库
-from sklearn.ensemble import RandomForestClassifier  # 随机森林分类算法
-from sklearn.model_selection import train_test_split  # 数据集拆分工具
-from sklearn.metrics import accuracy_score  # 评估指标
+from sklearn.ensemble import RandomForestClassifier  
+from sklearn.model_selection import train_test_split  
+from sklearn.metrics import accuracy_score  
 
 
-# 定义多粒度级联森林模型类
+
 class gcForest(object):
     # 定义初始化方法
     def __init__(self, shape_1X=None, n_mgsRFtree=30, window=None, stride=1,
@@ -163,7 +163,7 @@ class gcForest(object):
 
         return np.concatenate(mgs_pred_prob, axis=1)  # 返回数据
 
-    # 定义方法：对输入数据执行窗口切片，并将切分后的数据送入随机森林算法中进行处理。 如果提供了目标值 'y'，则会使用切分后的数据来训练随机森林。
+    
     def window_slicing_pred_prob(self, X, window, shape_1X, y=None):
         """ Performs a window slicing of the input data and send them through Random Forests.
         If target values 'y' are provided sliced data are then used to train the Random Forests.
