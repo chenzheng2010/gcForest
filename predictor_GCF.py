@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from lime.lime_tabular import LimeTabularExplainer
 
 # Load the new model
-model = joblib.load('GCF1.pkl')
+model = joblib.load('GCF.pkl')
 
 # Load the test data from X_test.csv to create LIME explainer
 X_test = pd.read_csv('X_test.csv')
