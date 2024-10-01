@@ -91,7 +91,7 @@ feature_values = [
     B_correlation, B_entropy
 ]
 features = np.array([feature_values])
-feature_values
+
 features
 if st.button("Predict"):
     # Predict class and probabilities
