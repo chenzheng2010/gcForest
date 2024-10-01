@@ -132,9 +132,6 @@ if st.button("Predict"):
 
     st.write(advice)
 
-
-    # 使用 SHAP 解释模型
-    # 使用一个小的子集作为背景数据（可以是Xtest的一个子集）
     background = shap.sample(X_test, 10)
     # explainer = shap.KernelExplainer(model.predict_proba, X_test.iloc[0:10, :])
     explainer = shap.KernelExplainer(model.predict_proba, background)
@@ -151,23 +148,20 @@ if st.button("Predict"):
     plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
     st.image("shap_force_plot.png", caption='SHAP Force Plot Explanation')
 
-    # 计算测试集的shap值, 限制前50个训练样本是因为计算所有样本时间太长, 这里自己定义用多少个样本或者用全部 运行速度相关 我使用了20个样本
     # shap_values1 = explainer.shap_values(X=X_test.iloc[0:20, :], nsamples=100)
     shap_values2 = explainer(X=X_test.iloc[0:20, :])
 
-    # 提取每个类别的 SHAP 值
     shap_values_class_1 = shap_values2.values[:, :, 0]
     shap_values_class_2 = shap_values2.values[:, :, 1]
     shap_values_class_3 = shap_values2.values[:, :, 2]
     shap_values_class_1
 
-    expected_value = explainer.expected_value[0]  # 需要指定个类别的基准值，这里是第一个类别
-    # 创建 shap.Explanation 对象
+    expected_value = explainer.expected_value[0]  
     shap_explanation = shap.Explanation(values=shap_values_class_1[0:10, :],
                                         base_values=expected_value,
                                         data=X_test.iloc[0:10, :],
                                         feature_names=X_test.columns)
-    # 绘制热图
+
     plt.figure()
     shap.plots.heatmap(shap_explanation)
     plt.savefig("shap_heatmap_plot.png", bbox_inches='tight', dpi=1200)
