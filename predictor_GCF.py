@@ -99,7 +99,7 @@ if st.button("Predict"):
     predicted_proba = model.predict_proba(features)[0]
 
     # Display prediction results
-    st.write(f"**Predicted Class:** {predicted_class} (0: 欠熟, 1: 适熟, 2: 过熟)")
+    st.write(f"**Predicted Class:** {predicted_class} (0: 代表欠熟, 1: 代表适熟, 2: 代表过熟)")
     st.write(f"**Prediction Probabilities:** {predicted_proba}")
 
     # Generate advice based on prediction results
